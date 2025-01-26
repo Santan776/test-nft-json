@@ -1,4 +1,4 @@
-import { createNft, fetchDigitalAsset, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
+import { createNft, fetchDigitalAsset, findMetadataPda, mplTokenMetadata, verifyCollectionV1 } from "@metaplex-foundation/mpl-token-metadata";
 import { airdropIfRequired, getExplorerLink, getKeypairFromFile } from "@solana-developers/helpers";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { clusterApiUrl, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -22,23 +22,14 @@ console.log("Umi user was set");
 
 const collectionAddress = publicKey("36GsLgWHkW3UbCdhoiUFneVaSjS1NpWPYP7bwjDUqr5n");
 
-console.log("Creating NFT...");
+const nftAddress = publicKey("EsqdHWPB3qz3WFSwacnBvRnNLZHShSB1pMB6hbCwGa73");
 
-const mint = generateSigner(umi);
-
-const transaction = createNft(umi, {
-    mint,
-    name: "Sad Cat",
-    uri: "https://raw.githubusercontent.com/Santan776/test-nft-json/refs/heads/master/nft-meta.json",
-    sellerFeeBasisPoints: percentAmount(0),
-    collection: {
-        key: collectionAddress,
-        verified: false
-    }
+const transaction = await verifyCollectionV1(umi, {
+    metadata: findMetadataPda(umi, { mint: nftAddress }),
+    collectionMint: collectionAddress,
+    authority: umi.identity
 });
 
-await transaction.sendAndConfirm(umi);
+transaction.sendAndConfirm(umi);
 
-const createdNft = await fetchDigitalAsset(umi, mint.publicKey);
-
-console.log(`NFT: ${getExplorerLink("address", createdNft.mint.publicKey, "devnet")}`);
+console.log(`NFT Verified`);
